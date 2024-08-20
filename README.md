@@ -1,6 +1,6 @@
-# Protomaps-Basemaps-PMTiles-on-MapLibre-GL-JS
+# Protomaps-Basemaps-PMTiles-on-MapLibre
 ## Public Website
-https://shi-works.github.io/Protomaps-Basemaps-PMTiles-on-MapLibre-GL-JS/
+https://shiwaku.github.io/Protomaps-Basemaps-PMTiles-on-MapLibre/
 
 ## Reference
 https://docs.protomaps.com/guide/getting-started
