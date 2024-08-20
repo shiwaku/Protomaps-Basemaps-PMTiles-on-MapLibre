@@ -1,0 +1,207 @@
+<html>
+
+<head>
+    <title>Protomaps Basemaps japan（PMTiles）</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src='https://unpkg.com/maplibre-gl@4.5.2/dist/maplibre-gl.js'></script>
+    <link href='https://unpkg.com/maplibre-gl@4.5.2/dist/maplibre-gl.css' rel='stylesheet' />
+    <script src="https://unpkg.com/pmtiles@2.11.0/dist/index.js"></script>
+    <style>
+        body {
+            margin: 0;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        #style {
+            padding: 3px 4px;
+            font: 12px/14px Arial, Helvetica, sans-serif;
+            color: black;
+            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            width: 140px;
+            top: 10px;
+            left: 10px;
+            position: absolute;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+    <div id="style">
+        <label><b>style</b></label><br>
+        <select id="style-selector">
+            <option value="./style-light.json">light</option>
+            <option value="./style-dark.json">dark</option>
+            <option value="./style-white.json">data viz (white)</option>
+            <option value="./style-grayscale.json">data viz (grayscale)</option>
+            <option value="./style-black.json">data viz (black)</option>
+        </select>
+    </div>
+    <script type="text/javascript">
+        // addProtocolの設定
+        let protocol = new pmtiles.Protocol();
+        maplibregl.addProtocol('pmtiles', (request) => {
+            return new Promise((resolve, reject) => {
+                const callback = (err, data) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ data });
+                    }
+                };
+                protocol.tile(request, callback);
+            });
+        });
+
+        let URL = "https://r2-public.protomaps.com/protomaps-sample-datasets/terrarium_z9.pmtiles";
+
+        // マップの初期化
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: './style-light.json',
+            // style: 'https://tile2.openstreetmap.jp/styles/osm-bright-ja/style.json',
+            zoom: 11.31,
+            minZoom: 1,
+            maxZoom: 23,
+            pitch: 73,
+            maxPitch: 85,
+            bearing: 0,
+            center: [138.7275, 35.3185],
+            hash: true,
+            attributionControl: false
+        });
+
+        // ズーム・回転
+        map.addControl(new maplibregl.NavigationControl());
+
+        // フルスクリーンモードのオンオフ
+        map.addControl(new maplibregl.FullscreenControl());
+
+        // 現在位置表示
+        map.addControl(new maplibregl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: false
+            },
+            fitBoundsOptions: { maxZoom: 18 },
+            trackUserLocation: true,
+            showUserLocation: true
+        }));
+
+        // スケール表示
+        map.addControl(new maplibregl.ScaleControl({
+            maxWidth: 200,
+            unit: 'metric'
+        }));
+
+        // Attributionを折りたたみ表示
+        map.addControl(new maplibregl.AttributionControl({
+            compact: true,
+            customAttribution: '（<a href="https://twitter.com/shi__works" target="_blank">X(旧Twitter)</a> | <a href="" target="_blank">Github</a>） '
+        }));
+
+        map.on('load', () => {
+            // 標高タイルソース
+            map.addSource("tilezen-dem", {
+                type: 'raster-dem',
+                url: "pmtiles://" + URL,
+                attribution: '<a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Tilezen Joerd: Attribution</a>',
+                "encoding": "terrarium"
+            });
+
+            // 標高タイルセット
+            map.setTerrain({ 'source': 'tilezen-dem', 'exaggeration': 1 });
+
+            // 陰影起伏図レイヤ
+            map.addLayer({
+                "id": "hillshade",
+                "type": "hillshade",
+                "source": "tilezen-dem",
+                "minzoom": 1,
+                "maxzoom": 18,
+                "layout": {},
+                "paint": {
+                    "hillshade-accent-color": "#5a5a5a",
+                    "hillshade-exaggeration": 0.5,
+                    "hillshade-highlight-color": "#FFFFFF",
+                    "hillshade-illumination-anchor": "viewport",
+                    "hillshade-illumination-direction": 335,
+                    "hillshade-shadow-color": "#5a5a5a"
+                }
+            });
+
+            // 3D地形コントロール
+            map.addControl(
+                new maplibregl.TerrainControl({
+                    source: 'tilezen-dem',
+                    exaggeration: 1 // 標高を強調する倍率
+                })
+            );
+
+        });
+
+        // 標高タイルソースとレイヤを追加する関数
+        function addElevationTiles(map) {
+            // ソース "tilezen-dem" が存在しない場合
+            if (!map.getSource('tilezen-dem')) {
+                // 標高タイルソースを追加
+                map.addSource("tilezen-dem", {
+                    type: 'raster-dem',
+                    url: "pmtiles://" + URL,
+                    attribution: '<a href="https://github.com/tilezen/joerd/blob/master/docs/attribution.md">Tilezen Joerd: Attribution</a>',
+                    "encoding": "terrarium"
+                });
+            }
+
+            // レイヤ "hillshade" が存在しない場合
+            if (!map.getLayer('hillshade')) {
+                // 陰影起伏図レイヤを追加
+                map.addLayer({
+                    "id": "hillshade",
+                    "type": "hillshade",
+                    "source": "tilezen-dem",
+                    "minzoom": 1,
+                    "maxzoom": 18,
+                    "layout": {},
+                    "paint": {
+                        "hillshade-accent-color": "#5a5a5a",
+                        "hillshade-exaggeration": 0.5,
+                        "hillshade-highlight-color": "#FFFFFF",
+                        "hillshade-illumination-anchor": "viewport",
+                        "hillshade-illumination-direction": 335,
+                        "hillshade-shadow-color": "#5a5a5a"
+                    }
+                });
+            }
+        }
+
+        // スタイルセレクタの取得
+        const styleSelector = document.getElementById('style-selector');
+
+        // スタイルセレクタの変更イベントのリスナーを追加
+        styleSelector.addEventListener('change', function () {
+            // 選択されたスタイルを取得
+            const selectedStyle = styleSelector.value;
+
+            // マップのスタイルを変更
+            map.setStyle(selectedStyle);
+
+            // スタイル変更後にソースとレイヤを再追加
+            map.on('styledata', function () {
+                addElevationTiles(map);
+            });
+        });
+
+
+    </script>
+</body>
+
+</html>
