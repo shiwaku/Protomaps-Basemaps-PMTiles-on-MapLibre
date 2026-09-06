@@ -4,7 +4,7 @@
     "protomaps": {
       "type": "vector",
       "tiles": [
-        "pmtiles://https://shiworks.xsrv.jp/pmtiles-data/protomaps/protomaps-basemaps-japan.pmtiles/{z}/{x}/{y}"
+        "pmtiles://https://shi-works.com/pmtiles/protomaps/protomaps-basemaps-japan.pmtiles/{z}/{x}/{y}"
       ],
       "minzoom": 0,
       "maxzoom": 15,
